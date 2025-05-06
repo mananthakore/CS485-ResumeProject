@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+:root {
+  --background-light: #f0f4f8;
+  --foreground-light: #333333;
+  --background-dark: #121212;
+  --foreground-dark: #eaeaea;
+  --primary-color: #4F8EF7;
+  --secondary-color: #f1f5f9;
+  --font-sans: "Arial", "Helvetica", sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background-light);
+  --color-foreground: var(--foreground-light);
+  --font-sans: var(--font-sans);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--background-dark);
+    --color-foreground: var(--foreground-dark);
+  }
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #3a7bd5;
+}
+
+.card {
+  background-color: var(--secondary-color);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+/* AI Response Box Styling */
+.ai-response {
+  background-color: var(--secondary-color);
+  color: var(--foreground-light);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 80%; /* Limit the width of the box */
+  margin: 20px auto;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  word-wrap: break-word;
+  white-space: pre-line; /* To maintain line breaks in the response */
+}
+
+/* Formatting for long text */
+.ai-response p {
+  margin: 0;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Add scrollable behavior for long responses */
+.ai-response-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+}

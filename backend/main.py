@@ -1,11 +1,17 @@
+# === File: backend/main.py ===
 from fastapi import FastAPI
-from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-from transformers import pipeline
+from pydantic import BaseModel
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 app = FastAPI()
 
-# CORS setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,30 +20,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load pipeline once at startup
-generator = pipeline("text2text-generation", model="google/flan-t5-base")
-
-class EnhanceRequest(BaseModel):
+class RewriteRequest(BaseModel):
     bullet: str
-    job_description: str
+    style: str
 
-@app.post("/enhance")
-async def enhance(req: EnhanceRequest):
-    try:
-        prompt = f"""
-        Rewrite the following resume bullet to better match the job description.
-        Use action verbs and quantify impact.
+class GenerateRequest(BaseModel):
+    role: str
+    responsibility: str
+    tech: str = ""
 
-        Job Description:
-        {req.job_description}
+model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25")
 
-        Resume Bullet:
-        {req.bullet}
+@app.post("/rewrite")
+async def rewrite_bullet(data: RewriteRequest):
+    prompt = f"Rewrite this resume bullet to be more {data.style}:\n'{data.bullet}'"
+    response = model.generate_content(prompt)
+    return {"rewritten": response.text.strip()}
 
-        Improved Bullet:
-        """
-        output = generator(prompt, max_length=128, do_sample=True)
-        return {"enhanced": output[0]['generated_text'].strip()}
-
-    except Exception as e:
-        return {"error": str(e)}
+@app.post("/generate")
+async def generate_bullet(data: GenerateRequest):
+    prompt = (
+        f"Write a professional resume bullet point for a {data.role} who {data.responsibility}"
+        f"{' using ' + data.tech if data.tech else ''}."
+    )
+    response = model.generate_content(prompt)
+    return {"generated": response.text.strip()}
