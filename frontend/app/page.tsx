@@ -11,7 +11,7 @@ type Message = {
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [mode, setMode] = useState<'rewrite' | 'generate'>('rewrite');
+  const [mode, setMode] = useState<'rewrite' | 'ats'>('rewrite');
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -31,31 +31,37 @@ export default function Home() {
     setInput('');
     setIsLoading(true);
 
-    let res: { data: { rewritten: string } | { generated: string } };
-
-    if (mode === 'rewrite') {
-      const [bullet, style] = input.split('|||').map(s => s.trim());
-      res = await axios.post('http://localhost:8000/rewrite', {
-      bullet,
-      style: style || 'results-driven',
-    });
-    setMessages((prev) => [
-      ...prev,
-      { sender: 'ai', text: (res.data as any).rewritten },
-    ]);
-  } else {
-    const [role, responsibility, tech] = input.split('|||').map(s => s.trim());
-    res = await axios.post('http://localhost:8000/generate', {
-    role,
-    responsibility,
-    tech,
-  });
-    setMessages((prev) => [
-    ...prev,
-    { sender: 'ai', text: (res.data as any).generated },
-  ]);
-  }
-}
+    try {
+      if (mode === 'rewrite') {
+        const [bullet, style] = input.split('|||').map(s => s.trim());
+        const res = await axios.post('http://localhost:8000/rewrite', {
+          bullet,
+          style: style || 'results-driven',
+        });
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'ai', text: res.data.rewritten },
+        ]);
+      } else {
+        const [bullet, jobDescription] = input.split('|||').map(s => s.trim());
+        const res = await axios.post('http://localhost:8000/ats_score', {
+          bullet,
+          job_description: jobDescription,
+        });
+        setMessages((prev) => [
+          ...prev,
+          { sender: 'ai', text: `ATS Similarity Score: ${res.data.ats_score}%` },
+        ]);
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'ai', text: 'Something went wrong. Please try again.' },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -79,12 +85,12 @@ export default function Home() {
           Rewrite
         </button>
         <button
-          onClick={() => setMode('generate')}
+          onClick={() => setMode('ats')}
           className={`px-3 py-1 rounded ${
-            mode === 'generate' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+            mode === 'ats' ? 'bg-blue-500 text-white' : 'bg-gray-200'
           }`}
         >
-          Generate
+          ATS Score
         </button>
       </div>
 
@@ -138,7 +144,7 @@ export default function Home() {
           placeholder={
             mode === 'rewrite'
               ? 'Enter your resume bullet point ||| desired style'
-              : 'Role ||| Responsibility ||| Technologies (optional)'
+              : 'Resume bullet point ||| Job description'
           }
           value={input}
           onChange={(e) => setInput(e.target.value)}

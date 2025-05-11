@@ -5,6 +5,8 @@ from pydantic import BaseModel
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 load_dotenv()
 
@@ -24,11 +26,10 @@ class RewriteRequest(BaseModel):
     bullet: str
     style: str
 
-class GenerateRequest(BaseModel):
-    role: str
-    responsibility: str
-    tech: str = ""
-
+class AtsScoreRequest(BaseModel):
+    bullet: str
+    job_description: str
+    
 model = genai.GenerativeModel("gemini-2.5-pro-exp-03-25")
 
 @app.post("/rewrite")
@@ -37,11 +38,10 @@ async def rewrite_bullet(data: RewriteRequest):
     response = model.generate_content(prompt)
     return {"rewritten": response.text.strip()}
 
-@app.post("/generate")
-async def generate_bullet(data: GenerateRequest):
-    prompt = (
-        f"Write a professional resume bullet point for a {data.role} who {data.responsibility}"
-        f"{' using ' + data.tech if data.tech else ''}."
-    )
-    response = model.generate_content(prompt)
-    return {"generated": response.text.strip()}
+@app.post("/ats_score")
+async def calculate_ats_score(data: AtsScoreRequest):
+    texts = [data.bullet, data.job_description]
+    vectorizer = TfidfVectorizer().fit_transform(texts)
+    vectors = vectorizer.toarray()
+    score = cosine_similarity([vectors[0]], [vectors[1]])[0][0]
+    return {"ats_score": round(score * 100, 2)}
