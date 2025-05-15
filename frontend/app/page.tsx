@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <main className="flex flex-col h-screen max-w-3xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">ChatGPT Resume Assistant</h1>
+      <h1 className="text-2xl font-bold text-center mb-4">BulletBoost</h1>
 
       {/* Mode Switch */}
       <div className="mb-4">
